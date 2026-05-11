@@ -8,7 +8,8 @@
 
 $conn = null;
 
-function db() {
+function db()
+{
     global $conn;
 
     // If already connected, return existing connection
@@ -17,10 +18,10 @@ function db() {
     }
 
     // Database settings
-    $host     = 'localhost';
+    $host = 'localhost';
     $username = 'root';
     $password = '';
-    $database = 'order_tracker';
+    $database = 'retail_tracker_pro';
 
     // Connect to MySQL
     $conn = new mysqli($host, $username, $password, $database);
@@ -47,7 +48,8 @@ function db() {
  * 
  * Types: s = string, i = integer, d = double/decimal
  */
-function db_query($sql, $types = '', $params = []) {
+function db_query($sql, $types = '', $params = [])
+{
     // If no parameters, run a simple query
     if ($types === '' || empty($params)) {
         $result = db()->query($sql);

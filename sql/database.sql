@@ -3,8 +3,8 @@
 -- Run this in phpMyAdmin to create the database
 -- =====================================================
 
-CREATE DATABASE IF NOT EXISTS order_tracker;
-USE order_tracker;
+CREATE DATABASE IF NOT EXISTS retail_tracker_pro;
+USE retail_tracker_pro;
 
 -- =====================================================
 -- USERS TABLE (for login)
@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS users (
     phone VARCHAR(20) DEFAULT NULL,
     role ENUM('Admin', 'Manager', 'Cashier', 'Inventory Staff') DEFAULT 'Cashier',
     is_active TINYINT(1) DEFAULT 1,
-    branch_id INT DEFAULT 1,
     last_login DATETIME DEFAULT NULL,
     last_activity DATETIME DEFAULT NULL,
     login_attempts INT DEFAULT 0,
@@ -47,7 +46,6 @@ CREATE TABLE IF NOT EXISTS products (
     barcode VARCHAR(50) DEFAULT NULL,
     product_image VARCHAR(255) DEFAULT NULL,
     category_id INT DEFAULT NULL,
-    supplier_id INT DEFAULT NULL,
     status ENUM('Active', 'Inactive') DEFAULT 'Active',
     created_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -68,7 +66,6 @@ CREATE TABLE IF NOT EXISTS orders (
     total_price DECIMAL(12,2) DEFAULT 0,
     shipping_address TEXT DEFAULT NULL,
     order_notes TEXT DEFAULT NULL,
-    branch_id INT DEFAULT 1,
     customer_id INT DEFAULT NULL,
     created_by INT DEFAULT NULL,
     order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -100,15 +97,6 @@ CREATE TABLE IF NOT EXISTS categories (
     category_name VARCHAR(100) NOT NULL,
     is_active TINYINT(1) DEFAULT 1,
     sort_order INT DEFAULT 0
-);
-
--- =====================================================
--- SUPPLIERS TABLE
--- =====================================================
-CREATE TABLE IF NOT EXISTS suppliers (
-    supplier_id INT AUTO_INCREMENT PRIMARY KEY,
-    company_name VARCHAR(200) NOT NULL,
-    is_active TINYINT(1) DEFAULT 1
 );
 
 -- =====================================================
@@ -155,23 +143,6 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 
 -- =====================================================
--- NOTIFICATIONS TABLE
--- =====================================================
-CREATE TABLE IF NOT EXISTS notifications (
-    notification_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT DEFAULT NULL,
-    type VARCHAR(50) DEFAULT NULL,
-    priority VARCHAR(20) DEFAULT 'normal',
-    title VARCHAR(200) DEFAULT NULL,
-    message TEXT DEFAULT NULL,
-    icon VARCHAR(50) DEFAULT 'fa-bell',
-    related_id INT DEFAULT NULL,
-    related_type VARCHAR(50) DEFAULT NULL,
-    is_read TINYINT(1) DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- =====================================================
 -- INVENTORY MOVEMENTS TABLE
 -- =====================================================
 CREATE TABLE IF NOT EXISTS inventory_movements (
@@ -202,23 +173,12 @@ CREATE TABLE IF NOT EXISTS payments (
 );
 
 -- =====================================================
--- BRANCHES TABLE
--- =====================================================
-CREATE TABLE IF NOT EXISTS branches (
-    branch_id INT AUTO_INCREMENT PRIMARY KEY,
-    branch_name VARCHAR(100) NOT NULL DEFAULT 'Main Branch'
-);
-
--- =====================================================
 -- INSERT DEFAULT DATA
 -- =====================================================
 
--- Default branch
-INSERT IGNORE INTO branches (branch_id, branch_name) VALUES (1, 'Main Branch');
-
 -- Default admin user (password: Admin@2026)
-INSERT INTO users (username, password_hash, full_name, email, role, is_active, branch_id)
-VALUES ('admin', '$2y$10$placeholder', 'Admin User', 'admin@retail.com', 'Admin', 1, 1)
+INSERT INTO users (username, password_hash, full_name, email, role, is_active)
+VALUES ('admin', '$2y$10$placeholder', 'Admin User', 'admin@retail.com', 'Admin', 1)
 ON DUPLICATE KEY UPDATE username = username;
 
 -- Default settings
