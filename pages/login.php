@@ -4,12 +4,10 @@
  */
 require_once __DIR__ . '/../includes/bootstrap.php';
 
-// If already logged in, go to dashboard
 if (is_logged_in()) {
     redirect('index.php?page=dashboard');
 }
 
-// Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = sanitize_input($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -29,8 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign In | RetailTracker Pro</title>
-    <link rel="stylesheet" href="assets/css/base.css" />
-    <link rel="stylesheet" href="assets/css/components.css" />
     <link rel="stylesheet" href="assets/css/style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -39,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="auth-page">
 <div class="auth-wrapper">
     <div class="auth-card">
-
         <div class="auth-brand">
             <div class="auth-logo"><i class="fa-solid fa-store"></i></div>
             <h1>RetailTracker Pro</h1>

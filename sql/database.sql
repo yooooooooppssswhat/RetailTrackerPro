@@ -1,13 +1,16 @@
 -- =====================================================
--- RetailTracker Pro - Database Setup
+-- RetailTracker Pro - Database Setup (Cleaned)
 -- Run this in phpMyAdmin to create the database
+-- Only includes tables for: Dashboard, Products, Orders,
+-- Inventory, and Users modules
 -- =====================================================
 
 CREATE DATABASE IF NOT EXISTS retail_tracker_pro;
 USE retail_tracker_pro;
 
 -- =====================================================
--- USERS TABLE (for login)
+-- USERS TABLE (for login + RBAC)
+-- Roles: Admin, Manager, Inventory Staff, Cashier
 -- =====================================================
 CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -19,11 +22,6 @@ CREATE TABLE IF NOT EXISTS users (
     role ENUM('Admin', 'Manager', 'Cashier', 'Inventory Staff') DEFAULT 'Cashier',
     is_active TINYINT(1) DEFAULT 1,
     last_login DATETIME DEFAULT NULL,
-    last_activity DATETIME DEFAULT NULL,
-    login_attempts INT DEFAULT 0,
-    locked_until DATETIME DEFAULT NULL,
-    force_password_change TINYINT(1) DEFAULT 0,
-    password_changed_at DATETIME DEFAULT NULL,
     created_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at DATETIME DEFAULT NULL
@@ -36,16 +34,10 @@ CREATE TABLE IF NOT EXISTS products (
     product_id INT AUTO_INCREMENT PRIMARY KEY,
     product_name VARCHAR(200) NOT NULL,
     description TEXT DEFAULT NULL,
-    brand VARCHAR(100) DEFAULT NULL,
-    unit VARCHAR(20) DEFAULT 'pcs',
     price DECIMAL(12,2) NOT NULL DEFAULT 0,
-    cost_price DECIMAL(12,2) DEFAULT 0,
     stock_quantity INT DEFAULT 0,
     low_stock_threshold INT DEFAULT 10,
-    sku_code VARCHAR(50) DEFAULT NULL,
-    barcode VARCHAR(50) DEFAULT NULL,
     product_image VARCHAR(255) DEFAULT NULL,
-    category_id INT DEFAULT NULL,
     status ENUM('Active', 'Inactive') DEFAULT 'Active',
     created_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -60,13 +52,7 @@ CREATE TABLE IF NOT EXISTS orders (
     order_number VARCHAR(30) NOT NULL,
     payment_method VARCHAR(50) DEFAULT 'Cash',
     subtotal DECIMAL(12,2) DEFAULT 0,
-    discount_amount DECIMAL(12,2) DEFAULT 0,
-    tax DECIMAL(12,2) DEFAULT 0,
-    shipping_fee DECIMAL(12,2) DEFAULT 0,
     total_price DECIMAL(12,2) DEFAULT 0,
-    shipping_address TEXT DEFAULT NULL,
-    order_notes TEXT DEFAULT NULL,
-    customer_id INT DEFAULT NULL,
     created_by INT DEFAULT NULL,
     order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -81,95 +67,26 @@ CREATE TABLE IF NOT EXISTS order_items (
     order_id INT NOT NULL,
     product_id INT DEFAULT NULL,
     product_name VARCHAR(200) NOT NULL,
-    sku_code VARCHAR(50) DEFAULT NULL,
     quantity INT NOT NULL DEFAULT 1,
     unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
-    cost_price DECIMAL(12,2) DEFAULT 0,
     total_price DECIMAL(12,2) NOT NULL DEFAULT 0,
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
 
 -- =====================================================
--- CATEGORIES TABLE
--- =====================================================
-CREATE TABLE IF NOT EXISTS categories (
-    category_id INT AUTO_INCREMENT PRIMARY KEY,
-    category_name VARCHAR(100) NOT NULL,
-    is_active TINYINT(1) DEFAULT 1,
-    sort_order INT DEFAULT 0
-);
-
--- =====================================================
--- CUSTOMERS TABLE
--- =====================================================
-CREATE TABLE IF NOT EXISTS customers (
-    customer_id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(150) NOT NULL,
-    email VARCHAR(100) DEFAULT NULL,
-    phone_number VARCHAR(20) DEFAULT NULL,
-    address TEXT DEFAULT NULL,
-    city VARCHAR(100) DEFAULT NULL,
-    customer_type ENUM('Individual','Business','Wholesale') DEFAULT 'Individual',
-    notes TEXT DEFAULT NULL,
-    total_spent DECIMAL(12,2) DEFAULT 0,
-    loyalty_points INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at DATETIME DEFAULT NULL
-);
-
--- =====================================================
--- ACTIVITY LOGS TABLE
--- =====================================================
-CREATE TABLE IF NOT EXISTS activity_logs (
-    log_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT DEFAULT NULL,
-    action VARCHAR(50) NOT NULL,
-    module VARCHAR(50) DEFAULT NULL,
-    description TEXT DEFAULT NULL,
-    details TEXT DEFAULT NULL,
-    ip_address VARCHAR(45) DEFAULT NULL,
-    user_agent VARCHAR(255) DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- =====================================================
--- SETTINGS TABLE
--- =====================================================
-CREATE TABLE IF NOT EXISTS settings (
-    setting_id INT AUTO_INCREMENT PRIMARY KEY,
-    setting_key VARCHAR(100) NOT NULL UNIQUE,
-    setting_value TEXT DEFAULT NULL,
-    setting_group VARCHAR(50) DEFAULT 'general'
-);
-
--- =====================================================
--- INVENTORY MOVEMENTS TABLE
+-- INVENTORY MOVEMENTS TABLE (stock tracking)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS inventory_movements (
     movement_id INT AUTO_INCREMENT PRIMARY KEY,
     product_id INT DEFAULT NULL,
     type VARCHAR(20) DEFAULT NULL,
-    quantity DECIMAL(12,2) DEFAULT 0,
-    previous_qty DECIMAL(12,2) DEFAULT 0,
-    new_qty DECIMAL(12,2) DEFAULT 0,
+    quantity INT DEFAULT 0,
+    previous_qty INT DEFAULT 0,
+    new_qty INT DEFAULT 0,
     reference VARCHAR(100) DEFAULT NULL,
     notes TEXT DEFAULT NULL,
     created_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- =====================================================
--- PAYMENTS TABLE
--- =====================================================
-CREATE TABLE IF NOT EXISTS payments (
-    payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT DEFAULT NULL,
-    payment_method VARCHAR(50) DEFAULT NULL,
-    payment_status VARCHAR(30) DEFAULT 'Pending',
-    amount DECIMAL(12,2) DEFAULT 0,
-    transaction_reference VARCHAR(100) DEFAULT NULL,
-    received_by INT DEFAULT NULL,
-    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =====================================================
@@ -178,15 +95,5 @@ CREATE TABLE IF NOT EXISTS payments (
 
 -- Default admin user (password: Admin@2026)
 INSERT INTO users (username, password_hash, full_name, email, role, is_active)
-VALUES ('admin', '$2y$10$placeholder', 'Admin User', 'admin@retail.com', 'Admin', 1)
+VALUES ('admin', '$2y$10$wJgdOeu3Q8P1SVNdyESxUezLOSdxlRAOvjAO3d4CHu9b3zbdwInii', 'Admin User', 'admin@retail.com', 'Admin', 1)
 ON DUPLICATE KEY UPDATE username = username;
-
--- Default settings
-INSERT INTO settings (setting_key, setting_value) VALUES
-('store_name', 'RetailTracker Pro'),
-('currency_symbol', '₱')
-ON DUPLICATE KEY UPDATE setting_key = setting_key;
-
--- Sample categories
-INSERT IGNORE INTO categories (category_name, is_active) VALUES
-('Groceries', 1), ('Beverages', 1), ('Snacks', 1), ('Personal Care', 1), ('Household', 1);

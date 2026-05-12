@@ -1,18 +1,18 @@
 <?php
 /**
  * Header - Sidebar navigation and top bar
+ * Only shows modules the user's role can access
  */
 $user = current_user();
 $currentPage = $_GET['page'] ?? 'dashboard';
+$currentModule = explode('-', $currentPage)[0];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><?= e(ucfirst($currentPage)) ?> | RetailTracker Pro</title>
-    <link rel="stylesheet" href="assets/css/base.css" />
-    <link rel="stylesheet" href="assets/css/components.css" />
+    <title><?= e(ucfirst($currentModule)) ?> | RetailTracker Pro</title>
     <link rel="stylesheet" href="assets/css/style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -31,12 +31,22 @@ $currentPage = $_GET['page'] ?? 'dashboard';
             </div>
         </div>
         <nav class="nav-menu">
-            <a href="index.php?page=dashboard" class="nav-item<?= $currentPage === 'dashboard' ? ' active' : '' ?>"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
-            <a href="index.php?page=products" class="nav-item<?= $currentPage === 'products' ? ' active' : '' ?>"><i class="fa-solid fa-box-open"></i><span>Products</span></a>
-            <a href="index.php?page=orders" class="nav-item<?= $currentPage === 'orders' ? ' active' : '' ?>"><i class="fa-solid fa-cart-shopping"></i><span>Orders</span></a>
-            <a href="index.php?page=inventory" class="nav-item<?= $currentPage === 'inventory' ? ' active' : '' ?>"><i class="fa-solid fa-warehouse"></i><span>Inventory</span></a>
-            <a href="index.php?page=reports" class="nav-item<?= $currentPage === 'reports' ? ' active' : '' ?>"><i class="fa-solid fa-chart-pie"></i><span>Reports</span></a>
-            <a href="index.php?page=settings" class="nav-item<?= $currentPage === 'settings' ? ' active' : '' ?>"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+            <?php
+            $navItems = [
+                ['page' => 'dashboard', 'icon' => 'fa-gauge-high',    'label' => 'Dashboard'],
+                ['page' => 'products',  'icon' => 'fa-box-open',      'label' => 'Products'],
+                ['page' => 'orders',    'icon' => 'fa-cart-shopping',  'label' => 'Orders'],
+                ['page' => 'inventory', 'icon' => 'fa-warehouse',     'label' => 'Inventory'],
+                ['page' => 'users',     'icon' => 'fa-users',         'label' => 'Users'],
+            ];
+            foreach ($navItems as $nav):
+                if (!can_access($nav['page'])) continue;
+                $activeClass = ($currentModule === $nav['page']) ? ' active' : '';
+            ?>
+            <a href="index.php?page=<?= $nav['page'] ?>" class="nav-item<?= $activeClass ?>">
+                <i class="fa-solid <?= $nav['icon'] ?>"></i><span><?= $nav['label'] ?></span>
+            </a>
+            <?php endforeach; ?>
         </nav>
         <div class="sidebar-footer">
             <div class="sidebar-user">
@@ -61,7 +71,7 @@ $currentPage = $_GET['page'] ?? 'dashboard';
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="dropdown-panel user-dropdown" id="userPanel">
-                        <a href="index.php?page=settings" class="dropdown-item"><i class="fa-solid fa-cog"></i> Settings</a>
+                        <div class="dropdown-item" style="pointer-events:none;opacity:0.7;"><i class="fa-solid fa-shield-halved"></i> <?= e($user['role'] ?? '') ?></div>
                         <div class="dropdown-divider"></div>
                         <a href="index.php?page=logout" class="dropdown-item text-danger"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
                     </div>
