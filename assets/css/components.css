@@ -56,6 +56,7 @@
 .stat-success .stat-icon{background:#d1fae5;color:#10b981}
 .stat-warning .stat-icon{background:#fef3c7;color:#f59e0b}
 .stat-info .stat-icon{background:#e0f2fe;color:#0ea5e9}
+.stat-danger .stat-icon{background:#fee2e2;color:#ef4444}
 .stat-card .stat-icon{background:var(--bg);color:var(--text2)}
 .stat-icon-sm{width:36px;height:36px;border-radius:8px;background:var(--bg);display:grid;place-items:center;font-size:.85rem;color:var(--text3);flex-shrink:0}
 .stat-info p{font-size:.75rem;color:var(--text2);margin:0;font-weight:500}
@@ -209,6 +210,16 @@ code{background:var(--bg);padding:2px 6px;border-radius:4px;font-size:.8rem;font
 .summary-panel{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .summary-row{display:flex;justify-content:space-between;font-size:.85rem}
 .summary-total{padding-top:10px;border-top:2px solid var(--border);font-size:1rem;font-weight:700;color:var(--primary)}
+
+/* Section Titles */
+.section-title{font-size:1.1rem;font-weight:700;margin:24px 0 12px;color:var(--text1);display:flex;align-items:center;gap:8px}
+.section-title i{color:var(--primary);font-size:.95rem}
+
+/* Panel Meta */
+.panel-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* Stat Info Small */
+.stat-info small{font-size:.7rem;color:var(--text3);margin-top:2px;display:block}
 
 /* Reports */
 .report-summary{display:flex;flex-direction:column;gap:10px}

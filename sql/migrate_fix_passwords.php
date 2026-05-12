@@ -9,9 +9,9 @@ echo "<pre>\n";
 echo "=== RetailTracker Pro: Password Setup ===\n\n";
 
 $passwords = [
-    'admin'      => 'Admin@2026',
-    'manager'    => 'Manager@2026',
-    'cashier1'   => 'Staff@2026',
+    'admin' => 'Admin@2026',
+    'manager' => 'Manager@2026',
+    'cashier1' => 'Staff@2026',
     'inventory1' => 'Staff@2026',
 ];
 
