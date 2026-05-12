@@ -33,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantities = $_POST['quantity'] ?? [];
     $unitPrices = $_POST['unit_price'] ?? [];
 
-    // Build items array and calculate subtotal
     $items = [];
     $subtotal = 0;
 
@@ -43,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $up = floatval($unitPrices[$i] ?? 0);
 
         if ($pid > 0 && $qty > 0 && $up > 0) {
-            // Get product name
             $row = db_query('SELECT product_name FROM products WHERE product_id=? LIMIT 1', 'i', [$pid])->fetch_assoc();
             $pName = $row ? $row['product_name'] : 'Unknown';
 
@@ -61,15 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uid = current_user()['user_id'];
 
             if ($orderId > 0) {
-                // ============================================
-                // UPDATE existing order
-                // ============================================
 
-                // Get the existing order number for movement references
                 $existingOrder = db_query('SELECT order_number FROM orders WHERE order_id=?', 'i', [$orderId])->fetch_assoc();
                 $orderNumber = $existingOrder['order_number'] ?? 'ORD-UNKNOWN';
 
-                // STEP 1: Restore stock from OLD order items
                 $oldItems = db_query('SELECT * FROM order_items WHERE order_id=?', 'i', [$orderId])->fetch_all(MYSQLI_ASSOC);
                 foreach ($oldItems as $oldItem) {
                     if ($oldItem['product_id']) {
@@ -77,11 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if ($prod) {
                             $prevQty = (int) $prod['stock_quantity'];
                             $restoredQty = $prevQty + (int) $oldItem['quantity'];
+
                             db_query('UPDATE products SET stock_quantity=? WHERE product_id=?', 'ii', [$restoredQty, $oldItem['product_id']]);
 
-                            // Log restoration movement
                             db_query(
-                                'INSERT INTO inventory_movements (product_id, type, quantity, previous_qty, new_qty, reference, notes, created_by) VALUES (?,?,?,?,?,?,?,?)',
+                                'INSERT INTO inventory_movements (product_id, type, quantity, previous_qty, new_qty, reference, notes, created_by)
+                                 VALUES (?,?,?,?,?,?,?,?)',
                                 'isiiissi',
                                 [$oldItem['product_id'], 'IN', (int) $oldItem['quantity'], $prevQty, $restoredQty, $orderNumber, 'Order edited - stock restored', $uid]
                             );
@@ -89,41 +83,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                // Update the order record
                 db_query('UPDATE orders SET payment_method=?, subtotal=?, total_price=? WHERE order_id=?', 'sddi', [$paymentMethod, $subtotal, $subtotal, $orderId]);
 
-                // Delete old items
                 db_query('DELETE FROM order_items WHERE order_id=?', 'i', [$orderId]);
 
             } else {
-                // ============================================
-                // INSERT new order
-                // ============================================
+
                 $orderNumber = generate_order_number();
-                db_query('INSERT INTO orders (order_number, payment_method, subtotal, total_price, created_by, order_date) VALUES (?,?,?,?,?,NOW())', 'ssddi', [$orderNumber, $paymentMethod, $subtotal, $subtotal, $uid]);
+
+                // 🔥 FIXED: use PHP time instead of NOW()
+                $orderDate = date('Y-m-d H:i:s');
+
+                db_query(
+                    'INSERT INTO orders (order_number, payment_method, subtotal, total_price, created_by, order_date)
+                     VALUES (?,?,?,?,?,?)',
+                    'ssddis',
+                    [$orderNumber, $paymentMethod, $subtotal, $subtotal, $uid, $orderDate]
+                );
+
                 $orderId = db()->insert_id;
             }
 
-            // ============================================
-            // Insert order items + DEDUCT STOCK
-            // ============================================
             foreach ($items as $item) {
                 db_query(
-                    'INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, total_price) VALUES (?,?,?,?,?,?)',
+                    'INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, total_price)
+                     VALUES (?,?,?,?,?,?)',
                     'iisidd',
                     [$orderId, $item['pid'], $item['name'], $item['qty'], $item['price'], $item['total']]
                 );
 
-                // Deduct stock from the product
                 $prod = db_query('SELECT stock_quantity FROM products WHERE product_id=?', 'i', [$item['pid']])->fetch_assoc();
                 if ($prod) {
                     $prevQty = (int) $prod['stock_quantity'];
                     $newQty = max(0, $prevQty - $item['qty']);
+
                     db_query('UPDATE products SET stock_quantity=? WHERE product_id=?', 'ii', [$newQty, $item['pid']]);
 
-                    // Log stock deduction movement
                     db_query(
-                        'INSERT INTO inventory_movements (product_id, type, quantity, previous_qty, new_qty, reference, notes, created_by) VALUES (?,?,?,?,?,?,?,?)',
+                        'INSERT INTO inventory_movements (product_id, type, quantity, previous_qty, new_qty, reference, notes, created_by)
+                         VALUES (?,?,?,?,?,?,?,?)',
                         'isiiissi',
                         [$item['pid'], 'OUT', $item['qty'], $prevQty, $newQty, $orderNumber, 'Order processed', $uid]
                     );
@@ -133,6 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             db()->commit();
             flash('success', 'Order saved successfully. Stock updated.');
             redirect('index.php?page=orders');
+
         } catch (Exception $e) {
             db()->rollback();
             flash('error', 'Error saving order: ' . $e->getMessage());
